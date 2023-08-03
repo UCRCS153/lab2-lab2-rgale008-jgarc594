@@ -125,6 +125,7 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
+  p->priority = 25;
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
