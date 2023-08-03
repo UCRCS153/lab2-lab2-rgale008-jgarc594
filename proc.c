@@ -547,7 +547,3 @@ procdump(void)
     cprintf("\n");
   }
 }
-
-int changepriority(int priority) {
-  //TODO: Finish changepriority function
-}
