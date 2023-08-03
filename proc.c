@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->priority = 10;
 
   release(&ptable.lock);
 
@@ -323,6 +324,7 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *high_priority_proc = 0;
   struct cpu *c = mycpu();
   c->proc = 0;
   
@@ -336,14 +338,17 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
+      if (high_priority_proc == 0 || p->priority < high_priority_proc->priority) {
+        high_priority_proc = p;
+      }
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      c->proc = high_priority_proc;
+      switchuvm(high_priority_proc);
+      high_priority_proc->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), high_priority_proc->context);
       switchkvm();
 
       // Process is done running for now.
@@ -531,4 +536,8 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+int changepriority(int priority) {
+  //TODO: Finish changepriority function
 }
