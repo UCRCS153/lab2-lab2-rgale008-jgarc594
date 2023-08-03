@@ -96,7 +96,7 @@ sys_changepriority(int priority) {
     return -1; // Invalid priority value
   }
 
-  myproc()->priority = priority;
+  myproc()->priority = priority; //Set to user-defined priority
   yield(); // Context switch to the highest priority process
   return 0;
 }

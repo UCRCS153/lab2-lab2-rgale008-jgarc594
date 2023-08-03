@@ -88,7 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
-  p->priority = 10;
+  p->priority = 10; //New procs are initialized with a priority of 10
 
   release(&ptable.lock);
 
@@ -338,9 +338,19 @@ scheduler(void)
       if(p->state != RUNNABLE)
         continue;
 
-      if (high_priority_proc == 0 || p->priority < high_priority_proc->priority) {
+      if (high_priority_proc == 0) {
         high_priority_proc = p;
       }
+      else if(p->priority < high_priority_proc->priority) {
+        high_priority_proc = p;
+        if(p->priority < 25) {
+          p->priority = p->priority + 1;
+        }
+        if(high_priority_proc->priority > 1) {
+          high_priority_proc->priority = high_priority_proc->priority - 1;
+        }
+      }
+
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
