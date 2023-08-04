@@ -89,3 +89,14 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+int 
+sys_changepriority(int priority) {
+  if (argint(0, &priority) < 0 || priority < 1 || priority > 25) {
+    return -1; // Invalid priority value
+  }
+
+  myproc()->priority = priority; //Set to user-defined priority
+  yield(); // Context switch to the highest priority process
+  return 0;
+}
