@@ -2,21 +2,41 @@
 #include "stat.h"
 #include "user.h"
 
-int main() {
-  // Print the original priority
-  printf(1, "Original priority: %d\n", getpriority());
+#define NUM_CHILDREN 3
 
-  // Change priority to a new value (e.g., 10)
-  changepriority(10);
-  printf(1, "Priority changed to: %d\n", getpriority());
+int child_workload(int iterations, int priority) {
+  int i, j;
+  for (i = 0; i < iterations; i++) {
+    for (j = 0; j < 1000000; j++) {} // Simulate some workload
+    changepriority(priority); // Change priority after each iteration
+  }
+  return 0;
+}
 
-  // Change priority to another value (e.g., 15)
-  changepriority(15);
-  printf(1, "Priority changed to: %d\n", getpriority());
+int main(void) {
+  int i;
+  int iterations = 100000;
 
-  // Change priority to an invalid value
-  changepriority(30); // Should return -1 (error)
-  printf(1, "Priority changed to: %d\n", getpriority());
+  printf(1, "Parent process PID: %d\n", getpid());
+
+  for (i = 0; i < NUM_CHILDREN; i++) {
+    int pid = fork();
+    if (pid < 0) {
+      printf(1, "fork failed\n");
+      exit();
+    } 
+    else if (pid == 0) {
+      // Child process
+      int priority = 25 - i * 8; // Create child processes with priorities 25, 17, 9
+      changepriority(priority);
+      child_workload(iterations, priority);
+      exit();
+    }
+  }
+
+  for (i = 0; i < NUM_CHILDREN; i++) {
+    wait();
+  }
 
   exit();
 }
