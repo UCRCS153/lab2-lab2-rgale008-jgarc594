@@ -91,7 +91,7 @@ sys_uptime(void)
 }
 
 int 
-sys_changepriority(int priority) {
+sys_setpriority(int priority) {
   if (argint(0, &priority) < 0 || priority < 1 || priority > 25) {
     return -1; // Invalid priority value
   }

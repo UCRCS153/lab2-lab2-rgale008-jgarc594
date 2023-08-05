@@ -8,7 +8,7 @@ int child_workload(int iterations, int priority) {
   int i, j;
   for (i = 0; i < iterations; i++) {
     for (j = 0; j < 1000000; j++) {} // Simulate some workload
-    changepriority(priority); // Change priority after each iteration
+    setpriority(priority); // Change priority after each iteration
   }
   return 0;
 }
@@ -28,7 +28,7 @@ int main(void) {
     else if (pid == 0) {
       // Child process
       int priority = 25 - i * 8; // Create child processes with priorities 25, 17, 9
-      changepriority(priority);
+      setpriority(priority);
       child_workload(iterations, priority);
       exit();
     }
