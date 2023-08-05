@@ -340,8 +340,10 @@ void scheduler(void) {
         continue;
 
       //First we decrement (increase) priority for all RUNNABLE processes while they wait
-      if (p->state == RUNNABLE && p->priority > 1) {
-        p->priority--;
+      if (p->state == RUNNABLE) {
+        if(p->priority > 1) {
+          p->priority--;
+        }
       }
 
       // Select the highest priority process for scheduling
