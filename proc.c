@@ -321,53 +321,44 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void 
-scheduler(void)
-{
-  #define TICKS_TO_BOOST 100
+void scheduler(void) {
   struct proc *p;
   struct proc *high_priority_proc;
   struct cpu *c = mycpu();
   c->proc = 0;
-  int ticks_since_boost = 0;
 
   for (;;) {
     // Enable interrupts on this processor.
     sti();
 
-    high_priority_proc = 0; // Initialize to NULL
+    high_priority_proc = 0; // Initialize high_priority_proc to 0 (NULL)
 
-    // Loop over process table looking for highest priority process to run.
+    // Loops over process table looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state != RUNNABLE)
+      if (p->state != RUNNABLE && p->state != RUNNING)
         continue;
 
+      //First we decrement (increase) priority for all RUNNABLE processes while they wait
+      if (p->state == RUNNABLE && p->priority > 1) {
+        p->priority--;
+      }
+
+      // Select the highest priority process for scheduling
       if (high_priority_proc == 0 || p->priority < high_priority_proc->priority) {
         high_priority_proc = p;
       }
     }
 
+    //Now, we increment (lower) priority for the chosen RUNNABLE process
     if (high_priority_proc != 0) {
-      // Decrement priority of the selected process to prevent starvation
-      if (high_priority_proc->priority < 25) {
-        high_priority_proc->priority++;
-      }
-
-      // Reset ticks_since_boost if process is running
       if (high_priority_proc->state == RUNNING) {
-        ticks_since_boost = 0;
-      } else {
-        // Otherwise, increment ticks_since_boost for processes that are waiting.
-        ticks_since_boost++;
-        // If it has been waiting for a long time, boost its priority.
-        if (ticks_since_boost >= TICKS_TO_BOOST) {
-          high_priority_proc->priority = 1;
-          ticks_since_boost = 0;
+        if (high_priority_proc->priority < 25) {
+          high_priority_proc->priority++;
         }
       }
 
-      // Switch to chosen process.
+      // Switch to the chosen process.
       c->proc = high_priority_proc;
       switchuvm(high_priority_proc);
       high_priority_proc->state = RUNNING;
@@ -382,7 +373,6 @@ scheduler(void)
     release(&ptable.lock);
   }
 }
-
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -560,4 +550,8 @@ procdump(void)
     }
     cprintf("\n");
   }
+}
+
+void setpriority(int priority) {
+  //myproc()->priority = priority;
 }
