@@ -193,6 +193,7 @@ fork(void)
   np->priority = curproc->priority;
 
   np->state = RUNNABLE;
+  np->start_time = ticks;
 
   release(&ptable.lock);
   return pid;
@@ -215,9 +216,12 @@ exit(void)
       curproc->ofile[fd] = 0;
     }
   }
-  cprintf("PID %d: Creation Time: %d, Start Time: %d, End Time: %d, Wait Time: %d\n",
+
+  myproc()->end_time = ticks;
+  int turnaround = myproc()->end_time - myproc()->start_time;
+  cprintf("PID %d: Creation Time: %d, Start Time: %d, End Time: %d, Wait Time: %d, Turnaround Time: %d\n",
           myproc()->pid, myproc()->creation_time, myproc()->start_time,
-          myproc()->end_time, myproc()->wait_time);
+          myproc()->end_time, myproc()->wait_time, turnaround);
 
   begin_op();
   iput(curproc->cwd);
@@ -331,10 +335,8 @@ scheduler(void)
         c->proc->priority++;
       }
 
-      highest_priority_proc->end_time = ticks;
       // Reset priority of selected process to the highest priority before executing it
       highest_priority_proc->priority = 0;
-      highest_priority_proc->start_time = ticks;
 
 
       // Switch to the chosen high priority process process.
