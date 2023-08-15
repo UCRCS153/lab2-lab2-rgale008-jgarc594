@@ -219,9 +219,9 @@ exit(void)
 
   myproc()->end_time = ticks;
   int turnaround = myproc()->end_time - myproc()->start_time;
-  cprintf("PID %d: Creation Time: %d, Start Time: %d, End Time: %d, Wait Time: %d, Turnaround Time: %d\n",
-          myproc()->pid, myproc()->creation_time, myproc()->start_time,
-          myproc()->end_time, myproc()->wait_time, turnaround);
+
+  cprintf("PID %d: \nCreation Time: %d \nWait Time: %d \nTurnaround Time: %d\n",
+          myproc()->pid, myproc()->creation_time, myproc()->wait_time, turnaround);
 
   begin_op();
   iput(curproc->cwd);
@@ -334,9 +334,6 @@ scheduler(void)
       if (c->proc && c->proc->priority < 31) {
         c->proc->priority++;
       }
-
-      // Reset priority of selected process to the highest priority before executing it
-      highest_priority_proc->priority = 0;
 
 
       // Switch to the chosen high priority process process.
