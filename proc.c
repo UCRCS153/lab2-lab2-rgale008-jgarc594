@@ -126,6 +126,7 @@ userinit(void)
 
   p = allocproc();
   p->priority = 10;
+
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -330,7 +331,7 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-
+  
   for (;;) {
     // Enable interrupts on this processor.
     sti();
@@ -562,6 +563,8 @@ procdump(void)
   }
 }
 
-void setpriority(int priority) {
-  //myproc()->priority = priority;
+void 
+setpriority(int priority) 
+{
+  myproc()->priority = priority;
 }
