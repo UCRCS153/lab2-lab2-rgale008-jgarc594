@@ -76,6 +76,11 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 10; //New procs are initialized with a priority of 10
+  p->creation_time = ticks; //get process creation time
+  p->start_time = 0; //initialize start_time
+  p->end_time = 0; //initialize end_time
+  p->wait_time = 0; //initialize wait_time
+
   release(&ptable.lock);
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -210,6 +215,10 @@ exit(void)
       curproc->ofile[fd] = 0;
     }
   }
+  cprintf("PID %d: Creation Time: %d, Start Time: %d, End Time: %d, Wait Time: %d\n",
+          myproc()->pid, myproc()->creation_time, myproc()->start_time,
+          myproc()->end_time, myproc()->wait_time);
+
   begin_op();
   iput(curproc->cwd);
   end_op();
@@ -309,6 +318,7 @@ scheduler(void)
       // Aging: Increase priority of runnable processes that are left to wait
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE && p != highest_priority_proc) {
+          p->wait_time++;
           if (p->priority < 31) {
             p->priority++;
           }
@@ -322,6 +332,8 @@ scheduler(void)
 
       // Reset priority of selected process to the highest priority before executing it
       highest_priority_proc->priority = 0;
+      highest_priority_proc->start_time = ticks;
+
 
       // Switch to the chosen process.
       c->proc = highest_priority_proc;
@@ -329,6 +341,8 @@ scheduler(void)
       highest_priority_proc->state = RUNNING;
       swtch(&(c->scheduler), highest_priority_proc->context);
       switchkvm();
+
+      highest_priority_proc->end_time = ticks;
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
