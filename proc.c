@@ -215,11 +215,11 @@ exit(void)
     }
   }
 
-  myproc()->end_time = ticks;
-  int turnaround = myproc()->end_time - myproc()->start_time;
+  //myproc()->end_time = ticks;
+  //int turnaround = myproc()->end_time - myproc()->start_time;
   
-  cprintf("PID %d:\nWait Time: %d \nTurnaround Time: %d\n",
-          myproc()->pid, myproc()->wait_time, turnaround);
+  //cprintf("PID %d:\nWait Time: %d \nTurnaround Time: %d\n",
+  //        myproc()->pid, myproc()->wait_time, turnaround);
 
   begin_op();
   iput(curproc->cwd);
@@ -257,6 +257,13 @@ wait(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != curproc)
         continue;
+      
+      
+      if(p->parent->priority != p->priority) {
+        p->priority = p->parent->priority;
+      }
+      
+
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
@@ -293,7 +300,7 @@ wait(void)
 void
 scheduler(void) 
 {
-  struct proc *p;
+  struct proc *p, *pTemp;
   struct cpu *c = mycpu();
   c->proc = 0;
 
@@ -303,20 +310,23 @@ scheduler(void)
 
     struct proc *highest_priority_proc = 0;
 
-
-    // Loops over process table once, looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state != RUNNABLE)
         continue;
 
-      if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
-        //Set highest priority
-        highest_priority_proc = p;
-      }
-    }
+      //Initialize highest priority to p
+      highest_priority_proc = p;
 
-    if (highest_priority_proc != 0) {
+      //Find actual highest priority
+      for(pTemp = ptable.proc; pTemp < &ptable.proc[NPROC]; pTemp++){
+	      if(pTemp->state != RUNNABLE)
+	        continue;
+	      if(highest_priority_proc->priority > pTemp->priority)
+	        highest_priority_proc = pTemp;
+      }
+/*
+      //Add to wait_time and increase priority for waiting processes
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE && p != highest_priority_proc) {
           //Decrement the wait time every cycle a proccess is left to wait
@@ -324,21 +334,27 @@ scheduler(void)
           if (p->priority > 0) {
             // Increase priority of runnable processes that are left to wait
             p->priority--;
+            cprintf("INCREASING PRIORITY OF WAITING PROCCESS: PID#%d\n", p->pid);
           }
         }
       }
 
       // Reduce priority of the running process if it hasn't reached the lowest priority
-      if (c->proc && c->proc->priority < 31) {
-        c->proc->priority++;
+      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->state == RUNNING) {
+          p->priority++;
+          cprintf("REDUCING PRIORITY OF CURRENT RUNNING PROCCESS PID#%d\n", c->proc->pid);
+        }
       }
-
-
+*/
       // Switch to the chosen high priority process process.
-      c->proc = highest_priority_proc;
-      switchuvm(highest_priority_proc);
-      highest_priority_proc->state = RUNNING;
-      swtch(&(c->scheduler), highest_priority_proc->context);
+
+      p = highest_priority_proc;
+      c->proc = p;
+      switchuvm(p);
+      p->state = RUNNING;
+
+      swtch(&(c->scheduler), p->context);
       switchkvm();
 
 
@@ -347,7 +363,6 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
-
     release(&ptable.lock);
   }
 }
@@ -513,5 +528,5 @@ procdump(void)
   }
 }
 void setpriority(int priority) {
-  //myproc()->priority = priority;
+  myproc()->priority = priority;
 }
