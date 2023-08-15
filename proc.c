@@ -309,19 +309,19 @@ scheduler(void)
         continue;
 
       if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
-        //Sets highest priority
+        //Set highest priority
         highest_priority_proc = p;
       }
     }
 
     if (highest_priority_proc != 0) {
-      // Aging: Increase priority of runnable processes that are left to wait
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE && p != highest_priority_proc) {
-          //increment wait time every time proccess is left to wait
+          //Decrement the wait time every cycle a proccess is left to wait
           p->wait_time++;
-          if (p->priority < 31) {
-            p->priority++;
+          if (p->priority > 0) {
+            // Increase priority of runnable processes that are left to wait
+            p->priority--;
           }
         }
       }
@@ -331,13 +331,13 @@ scheduler(void)
         c->proc->priority++;
       }
 
-      // Reset priority of selected process to the highest priority before executing it
       highest_priority_proc->end_time = ticks;
+      // Reset priority of selected process to the highest priority before executing it
       highest_priority_proc->priority = 0;
       highest_priority_proc->start_time = ticks;
 
 
-      // Switch to the chosen process.
+      // Switch to the chosen high priority process process.
       c->proc = highest_priority_proc;
       switchuvm(highest_priority_proc);
       highest_priority_proc->state = RUNNING;
