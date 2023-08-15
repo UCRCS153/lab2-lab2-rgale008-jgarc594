@@ -292,13 +292,14 @@ scheduler(void)
 
     struct proc *highest_priority_proc = 0;
 
-    // Loops over process table looking for highest priority process to run.
+    // Loops over process table once, looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state != RUNNABLE)
         continue;
 
       if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
+        //Sets highest priority
         highest_priority_proc = p;
       }
     }
@@ -328,7 +329,7 @@ scheduler(void)
       }
 
       // Reset priority of selected process to the highest priority before executing it
-      highest_priority_proc->priority = 1;
+      highest_priority_proc->priority = 0;
 
       // Switch to the chosen process.
       c->proc = highest_priority_proc;
