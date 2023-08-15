@@ -314,15 +314,6 @@ scheduler(void)
         }
       }
 
-      // Priority donation: If the running process is waiting for a lower-priority child,
-      // donate its priority to the child process.
-      if (c->proc && c->proc->state == RUNNING && c->proc->waiting_child != 0) {
-        struct proc *child = c->proc->waiting_child;
-        if (child->state == RUNNABLE && child->priority > c->proc->priority) {
-          child->priority = c->proc->priority;
-        }
-      }
-
       // Reduce priority of the running process if it hasn't reached the lowest priority
       if (c->proc && c->proc->priority < 31) {
         c->proc->priority++;
