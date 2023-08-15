@@ -76,7 +76,6 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->priority = 10; //New procs are initialized with a priority of 10
-  p->creation_time = ticks; //get process creation time
   p->start_time = 0; //initialize start_time
   p->end_time = 0; //initialize end_time
   p->wait_time = 0; //initialize wait_time
@@ -110,7 +109,6 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
-  p->priority = 25;
   p->priority = 10;
 
   initproc = p;
@@ -219,9 +217,9 @@ exit(void)
 
   myproc()->end_time = ticks;
   int turnaround = myproc()->end_time - myproc()->start_time;
-
-  cprintf("PID %d: \nCreation Time: %d \nWait Time: %d \nTurnaround Time: %d\n",
-          myproc()->pid, myproc()->creation_time, myproc()->wait_time, turnaround);
+  
+  cprintf("PID %d:\nWait Time: %d \nTurnaround Time: %d\n",
+          myproc()->pid, myproc()->wait_time, turnaround);
 
   begin_op();
   iput(curproc->cwd);
