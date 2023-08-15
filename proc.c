@@ -290,15 +290,43 @@ scheduler(void)
   for (;;) {
     // Enable interrupts on this processor.
     sti();
+
+    int min_priority_proc = 25;
+    int old_priority_proc = 0;
+    int inherit_flag = 0;
     struct proc *highest_priority_proc = 0;
     
+
     // Loops over process table looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
       if (p->state != RUNNABLE)
         continue;
+
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      if(p->priority < min_priority_proc){ //if the current proc has a lower prio
+        min_priority_proc = p->priority; //story its prio as the new min and run it
+      }
+
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state == RUNNING){
+          inherit_flag = 1;
+          old_priority_proc = p->priority; // if the current process running doesn't have the highest prio, promote it temporarily. Store it's old prio so it can later be restored
+          p->priority = min_priority_proc;
+        }
+      }
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+      //First we decrement (increase) priority for all RUNNABLE processes while they wait
+      if (p->state == RUNNABLE) {
+        if(p->priority > 1) {
+          p->priority--;
+        }
+      }
+
       if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
         highest_priority_proc = p;
+
       }
     }
     if (highest_priority_proc != 0) {
@@ -330,6 +358,13 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
+
+    if(inherit_flag == 1){ // Prio inheritence: when the running task is done, change back its prio
+      high_priority_proc->priority = old_priority_proc;
+      inherit_flag = 0;
+    }
+
+
     release(&ptable.lock);
   }
 }
