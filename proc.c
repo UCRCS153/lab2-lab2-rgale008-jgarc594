@@ -321,50 +321,51 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void scheduler(void) {
+void
+scheduler(void) 
+{
   struct proc *p;
-  struct proc *high_priority_proc;
   struct cpu *c = mycpu();
   c->proc = 0;
-
+  
   for (;;) {
     // Enable interrupts on this processor.
     sti();
 
-    high_priority_proc = 0; // Initialize high_priority_proc to 0 (NULL)
-
+    struct proc *highest_priority_proc = 0;
+    
     // Loops over process table looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
-      if (p->state != RUNNABLE && p->state != RUNNING)
+      if (p->state != RUNNABLE)
         continue;
 
-      //First we decrement (increase) priority for all RUNNABLE processes while they wait
-      if (p->state == RUNNABLE) {
-        if(p->priority > 1) {
-          p->priority--;
-        }
-      }
-
-      // Select the highest priority process for scheduling
-      if (high_priority_proc == 0 || p->priority < high_priority_proc->priority) {
-        high_priority_proc = p;
+      if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
+        highest_priority_proc = p;
       }
     }
 
-    //Now, we increment (lower) priority for the chosen RUNNABLE process
-    if (high_priority_proc != 0) {
-      if (high_priority_proc->state == RUNNING) {
-        if (high_priority_proc->priority < 25) {
-          high_priority_proc->priority++;
+    if (highest_priority_proc != 0) {
+      // Aging: Increase priority of runnable processes that are left to wait
+      for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+        if (p->state == RUNNABLE && p != highest_priority_proc) {
+          if (p->priority < 31) {
+            p->priority++;
+          }
         }
       }
 
+      // Reduce priority of the running process if it hasn't reached the lowest priority
+      if (c->proc && c->proc->priority < 31) {
+        c->proc->priority++;
+      }
+
       // Switch to the chosen process.
-      c->proc = high_priority_proc;
-      switchuvm(high_priority_proc);
-      high_priority_proc->state = RUNNING;
-      swtch(&(c->scheduler), high_priority_proc->context);
+      c->proc = highest_priority_proc;
+      switchuvm(highest_priority_proc);
+      highest_priority_proc->state = RUNNING;
+      highest_priority_proc->priority = 1; // Reset priority to highest
+      swtch(&(c->scheduler), highest_priority_proc->context);
       switchkvm();
 
       // Process is done running for now.
@@ -375,6 +376,7 @@ void scheduler(void) {
     release(&ptable.lock);
   }
 }
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
