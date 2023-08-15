@@ -292,6 +292,7 @@ scheduler(void)
 
     struct proc *highest_priority_proc = 0;
 
+
     // Loops over process table once, looking for highest priority process to run.
     acquire(&ptable.lock);
     for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
