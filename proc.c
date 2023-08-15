@@ -125,7 +125,8 @@ userinit(void)
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
   p = allocproc();
-  p->priority = 1;
+  p->priority = 10;
+
   
   initproc = p;
   if((p->pgdir = setupkvm()) == 0)
@@ -216,6 +217,9 @@ fork(void)
 
   acquire(&ptable.lock);
 
+  // Inherit parent's priority
+  np->priority = curproc->priority;
+  
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -360,11 +364,13 @@ scheduler(void)
         c->proc->priority++;
       }
 
+      // Reset priority of selected process to the highest priority before executing it
+      highest_priority_proc->priority = 1;
+
       // Switch to the chosen process.
       c->proc = highest_priority_proc;
       switchuvm(highest_priority_proc);
       highest_priority_proc->state = RUNNING;
-      highest_priority_proc->priority = 1; // Reset priority to highest
       swtch(&(c->scheduler), highest_priority_proc->context);
       switchkvm();
 
@@ -376,6 +382,7 @@ scheduler(void)
     release(&ptable.lock);
   }
 }
+
 
 
 // Enter scheduler.  Must hold only ptable.lock
