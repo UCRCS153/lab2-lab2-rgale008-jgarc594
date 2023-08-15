@@ -260,6 +260,14 @@ wait(void)
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->parent != curproc)
         continue;
+
+        //new code
+        if(p->parent->priority < p->priority){
+          cprintf("Prio value before: %d\n", p->priority);
+          p->priority = p->parent->priority;
+          cprintf("Prio val after: %d\n", p->priority);
+        }
+
       havekids = 1;
       if(p->state == ZOMBIE){
         // Found one.
