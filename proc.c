@@ -318,6 +318,7 @@ scheduler(void)
       // Aging: Increase priority of runnable processes that are left to wait
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
         if (p->state == RUNNABLE && p != highest_priority_proc) {
+          //increment wait time every time proccess is left to wait
           p->wait_time++;
           if (p->priority < 31) {
             p->priority++;
@@ -331,6 +332,7 @@ scheduler(void)
       }
 
       // Reset priority of selected process to the highest priority before executing it
+      highest_priority_proc->end_time = ticks;
       highest_priority_proc->priority = 0;
       highest_priority_proc->start_time = ticks;
 
@@ -342,7 +344,7 @@ scheduler(void)
       swtch(&(c->scheduler), highest_priority_proc->context);
       switchkvm();
 
-      highest_priority_proc->end_time = ticks;
+
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
