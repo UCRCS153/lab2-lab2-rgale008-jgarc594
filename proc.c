@@ -285,17 +285,12 @@ scheduler(void)
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
-  
 
   for (;;) {
     // Enable interrupts on this processor.
     sti();
 
-    int min_priority_proc = 25;
-    int old_priority_proc = 0;
-    int inherit_flag = 0;
     struct proc *highest_priority_proc = 0;
-    
 
     // Loops over process table looking for highest priority process to run.
     acquire(&ptable.lock);
@@ -303,32 +298,11 @@ scheduler(void)
       if (p->state != RUNNABLE)
         continue;
 
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-      if(p->priority < min_priority_proc){ //if the current proc has a lower prio
-        min_priority_proc = p->priority; //story its prio as the new min and run it
-      }
-
-      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-        if(p->state == RUNNING){
-          inherit_flag = 1;
-          old_priority_proc = p->priority; // if the current process running doesn't have the highest prio, promote it temporarily. Store it's old prio so it can later be restored
-          p->priority = min_priority_proc;
-        }
-      }
-      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-      //First we decrement (increase) priority for all RUNNABLE processes while they wait
-      if (p->state == RUNNABLE) {
-        if(p->priority > 1) {
-          p->priority--;
-        }
-      }
-
       if (highest_priority_proc == 0 || p->priority < highest_priority_proc->priority) {
         highest_priority_proc = p;
-
       }
     }
+
     if (highest_priority_proc != 0) {
       // Aging: Increase priority of runnable processes that are left to wait
       for (p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
@@ -338,6 +312,16 @@ scheduler(void)
           }
         }
       }
+
+      // Priority donation: If the running process is waiting for a lower-priority child,
+      // donate its priority to the child process.
+      if (c->proc && c->proc->state == RUNNING && c->proc->waiting_child != 0) {
+        struct proc *child = c->proc->waiting_child;
+        if (child->state == RUNNABLE && child->priority > c->proc->priority) {
+          child->priority = c->proc->priority;
+        }
+      }
+
       // Reduce priority of the running process if it hasn't reached the lowest priority
       if (c->proc && c->proc->priority < 31) {
         c->proc->priority++;
@@ -350,7 +334,6 @@ scheduler(void)
       c->proc = highest_priority_proc;
       switchuvm(highest_priority_proc);
       highest_priority_proc->state = RUNNING;
-      highest_priority_proc->priority = 0; // Reset priority to highest
       swtch(&(c->scheduler), highest_priority_proc->context);
       switchkvm();
 
@@ -359,16 +342,9 @@ scheduler(void)
       c->proc = 0;
     }
 
-    if(inherit_flag == 1){ // Prio inheritence: when the running task is done, change back its prio
-      high_priority_proc->priority = old_priority_proc;
-      inherit_flag = 0;
-    }
-
-
     release(&ptable.lock);
   }
 }
-
 
 
 // Enter scheduler.  Must hold only ptable.lock
