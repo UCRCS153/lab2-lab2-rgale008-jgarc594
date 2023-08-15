@@ -326,6 +326,7 @@ scheduler(void)
           highest_priority_proc = pTemp;
       }
 
+      //If process is left to wait then increment process wait time
       for(pTemp = ptable.proc; pTemp < &ptable.proc[NPROC]; pTemp++){
 	      if(pTemp->state == RUNNABLE  && pTemp != highest_priority_proc)
 	        pTemp->wait_time++;
