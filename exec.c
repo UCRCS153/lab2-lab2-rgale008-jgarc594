@@ -19,6 +19,11 @@ exec(char *path, char **argv)
   pde_t *pgdir, *oldpgdir;
   struct proc *curproc = myproc();
 
+acquire(&tickslock);
+curproc->start_time = ticks;
+curproc->burst_time += ticks;
+release(&tickslock);
+
   begin_op();
 
   if((ip = namei(path)) == 0){
