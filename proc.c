@@ -190,6 +190,7 @@ fork(void)
 
   // Inherit parent's priority
   np->priority = curproc->priority;
+  cprintf("Priority value inherits: %d\n", np->priority);
 
   np->state = RUNNABLE;
 
