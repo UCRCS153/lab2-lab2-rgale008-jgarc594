@@ -190,7 +190,7 @@ fork(void)
 
   // Inherit parent's priority
   np->priority = curproc->priority;
-  cprintf("Priority value inherits: %d\n", np->priority);
+  //cprintf("Priority value inherits: %d\n", np->priority);
 
   np->state = RUNNABLE;
 
@@ -260,9 +260,9 @@ wait(void)
         continue;
 
       if(p->parent->priority < p->priority){
-        cprintf("Priority value before donation: %d\n", p->priority);
+        //cprintf("Priority value before donation: %d\n", p->priority);
         p->priority = p->parent->priority;
-        cprintf("Priority value after donation: %d\n", p->priority);
+        //cprintf("Priority value after donation: %d\n", p->priority);
       }
       havekids = 1;
       if(p->state == ZOMBIE){
